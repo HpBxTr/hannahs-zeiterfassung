@@ -1,0 +1,9 @@
+{$APP_DOMAIN} {
+	basic_auth {
+		{env.ZEITBUCH_USER} {env.ZEITBUCH_PASSWORD_HASH}
+	}
+
+	reverse_proxy app:3000 {
+		header_up -Authorization
+	}
+}
