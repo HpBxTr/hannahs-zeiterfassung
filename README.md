@@ -16,7 +16,7 @@ Private Next.js-Anwendung für einen einzelnen freigegebenen Zugang. Die App pr�
 
    | Variable | Wert |
    | --- | --- |
-   | `AUTH_URL` | `https://hanner.jasperpecher.de` |
+   | `AUTH_URL` | `https://zeit.example.com` |
    | `AUTH_SECRET` | Erzeugtes Sitzungsgeheimnis |
    | `ZEITBUCH_USERNAME` | Gewünschter Benutzername |
    | `ZEITBUCH_PASSWORD_HASH` | Vollständige Ausgabe des Hash-Skripts |
