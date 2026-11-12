@@ -3,6 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Hannahs Zeiterfassung',
+  robots: { index: false, follow: false },
   description: 'Arbeitszeiten pro Mandant erfassen und abrechnen.',
 };
 
