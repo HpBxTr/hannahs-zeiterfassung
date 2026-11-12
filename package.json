@@ -7,7 +7,8 @@
   },
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
-    "build": "next build",
+    "init-db": "node scripts/init-db.mjs",
+    "build": "node scripts/init-db.mjs && next build",
     "start": "next start --hostname 127.0.0.1"
   },
   "dependencies": {
