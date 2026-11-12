@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth, isAllowedUser, isAuthConfigured } from '../../auth';
+import { siteTitle } from '../../site-title';
 import { login } from '../auth-actions';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +19,7 @@ export default async function SignInPage({
       <header className="topbar">
         <div className="top-inner brand">
           <span className="brand-icon" aria-hidden="true"><span className="clock-icon" /></span>
-          <h1>Hannahs Zeiterfassung</h1>
+          <h1>{siteTitle()}</h1>
         </div>
       </header>
       <main className="shell">
