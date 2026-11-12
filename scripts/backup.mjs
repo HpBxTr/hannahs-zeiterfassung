@@ -1,20 +1,22 @@
-import { createReadStream } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { createReadStream, existsSync } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
-import { backup, DatabaseSync } from 'node:sqlite';
 
-const directory = await mkdtemp(join(tmpdir(), 'zeitbuch-'));
-try {
-  const copy = join(directory, 'backup.sqlite');
-  const db = new DatabaseSync(resolve(process.env.DATABASE_PATH ?? './data/zeitbuch.sqlite'), { readOnly: true });
-  try {
-    await backup(db, copy);
-  } finally {
-    db.close();
-  }
-  await pipeline(createReadStream(copy), process.stdout);
-} finally {
-  await rm(directory, { recursive: true, force: true });
+const url = process.env.TURSO_DATABASE_URL ?? process.env.DATABASE_URL;
+
+if (url) {
+  console.error(
+    'Hinweis: Turso-Datenbanken werden über die Turso CLI oder das Dashboard gesichert:\n' +
+    '  turso db dump <datenbank-name> > backup.sql'
+  );
+  process.exit(1);
 }
+
+const rawPath = process.env.DATABASE_PATH ?? './data/zeitbuch.sqlite';
+const filePath = rawPath.replace(/^file:/, '');
+
+if (!existsSync(filePath)) {
+  console.error(`Keine lokale Datenbank unter ${filePath} gefunden.`);
+  process.exit(1);
+}
+
+await pipeline(createReadStream(filePath), process.stdout);

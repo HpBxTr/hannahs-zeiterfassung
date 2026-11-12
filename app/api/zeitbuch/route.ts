@@ -4,10 +4,10 @@ import { readDay, saveChange } from '../../../lib/zeitbuch';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export function GET(request: Request) {
-  return readDay(request, database());
+export async function GET(request: Request) {
+  return await readDay(request, database());
 }
 
-export function POST(request: Request) {
-  return saveChange(request, database());
+export async function POST(request: Request) {
+  return await saveChange(request, database());
 }
