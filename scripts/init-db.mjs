@@ -1,10 +1,7 @@
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-const dbPath = resolve(
-  path.join(process.cwd(), process.env.DATABASE_PATH) ??
-    path.join(process.cwd(), "./data/zeitbuch.sqlite"),
-);
+const dbPath = resolve(process.env.DATABASE_PATH ?? "./data/zeitbuch.sqlite");
 if (!existsSync(dbPath)) {
   console.log(`Erstelle SQLite-Datenbank unter ${dbPath}...`);
   mkdirSync(dirname(dbPath), { recursive: true, mode: 0o700 });
