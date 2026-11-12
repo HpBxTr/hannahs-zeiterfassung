@@ -1,4 +1,4 @@
-# Hannahs Zeiterfassung
+# Zeiterfassung
 
 Private Next.js-Anwendung für einen einzelnen freigegebenen Zugang. Die App prüft die Anmeldung beim Öffnen der Oberfläche und vor jedem Lese- und Schreibzugriff auf die Zeiterfassung. Für die Anmeldung genügen Benutzername und Passwort. Der Server speichert einen gesalzenen scrypt-Hash und begrenzt Anmeldeversuche über die gemeinsame Datenbank.
 
@@ -17,6 +17,7 @@ Private Next.js-Anwendung für einen einzelnen freigegebenen Zugang. Die App pr�
    | Variable | Wert |
    | --- | --- |
    | `AUTH_URL` | `https://zeit.example.com` |
+   | `ZEITBUCH_TITLE` | Optionaler Anzeigename der Anwendung |
    | `AUTH_SECRET` | Erzeugtes Sitzungsgeheimnis |
    | `ZEITBUCH_USERNAME` | Gewünschter Benutzername |
    | `ZEITBUCH_PASSWORD_HASH` | Vollständige Ausgabe des Hash-Skripts |
