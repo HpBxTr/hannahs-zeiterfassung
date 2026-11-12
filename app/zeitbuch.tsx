@@ -32,7 +32,7 @@ function csvCell(value: string) {
   return '"' + safe.replaceAll('"', '""') + '"';
 }
 
-export default function Zeitbuch() {
+export default function Zeitbuch({ appTitle }: { appTitle: string }) {
   const [today, setToday] = useState('');
   const [selected, setSelected] = useState('');
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -295,7 +295,7 @@ export default function Zeitbuch() {
   return (
     <>
       <header className="topbar"><div className="top-inner">
-        <div className="brand"><span className="brand-icon" aria-hidden="true"><span className="clock-icon" /></span><h1>Hannahs Zeiterfassung</h1></div>
+        <div className="brand"><span className="brand-icon" aria-hidden="true"><span className="clock-icon" /></span><h1>{appTitle}</h1></div>
         <div className="header-actions">
           <div className="header-status"><span className={'status-dot ' + (active ? 'live' : '')} />{activeMatter ? activeMatter.name + ' läuft' : snapshot ? 'Kein Timer läuft' : 'Timerstatus wird geladen'}</div>
           <form action={logout}><button className="button small">Abmelden</button></form>
