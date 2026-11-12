@@ -1,56 +1,39 @@
-# Hannahs Zeiterfassung auf der eigenen Domain
+# Hannahs Zeiterfassung
 
-Dieses Paket enthält die Next.js-Anwendung, eine SQLite-Datenbank für den eigenen Server und eine Docker-Compose-Konfiguration für HTTPS und Passwortschutz. SQLite legt die Datenbank beim ersten Datenabruf an. Das Paket startet mit einem leeren Zeitbuch. Daten aus der bisherigen ChatGPT-Site sind separat gespeichert. Dort lassen sich Tagesberichte per CSV herunterladen.
+Private Next.js-Anwendung für einen einzelnen freigegebenen Zugang. Die App prüft die Anmeldung beim Öffnen der Oberfläche und vor jedem Lese- und Schreibzugriff auf die Zeiterfassung. Für die Anmeldung genügen Benutzername und Passwort. Der Server speichert einen gesalzenen scrypt-Hash und begrenzt Anmeldeversuche über die gemeinsame Datenbank.
 
-## Voraussetzungen
+## Auf Vercel einrichten
 
-- Ein Server mit Docker und Docker Compose v2, zum Beispiel ein VPS.
-- Eine Domain oder Subdomain, deren DNS du verwaltest. Die Beispiele verwenden `zeit.meine-domain.de`.
-- Die TCP-Ports 80 und 443 sind am Server frei und von außen erreichbar.
-
-## Installieren
-
-1. Lege bei deinem DNS-Anbieter für die gewünschte Domain oder Subdomain einen A-Eintrag mit der öffentlichen IPv4-Adresse des Servers an. Verwende einen AAAA-Eintrag nur, wenn der Server auch unter der angegebenen IPv6-Adresse erreichbar ist.
-2. Entpacke das ZIP auf dem Server und öffne das Projektverzeichnis.
-3. Kopiere die Konfigurationsvorlage und erstelle einen Passwort-Hash. Der zweite Befehl fragt nach dem Passwort.
+1. Führe die SQL-Anweisung aus `database/auth.sql` einmal in der bestehenden Turso-Datenbank aus, etwa in der Turso SQL Shell. Die Anweisung legt ausschließlich die Tabelle für Anmeldeversuche an. Vorhandene Mandanten und Zeiten bleiben erhalten.
+2. Erzeuge auf einem vertrauenswürdigen Rechner einen Passwort-Hash. Der folgende Befehl fragt das Passwort verdeckt ab. Verwende ein neues, zufällig erzeugtes Passwort mit mindestens 16 Zeichen.
 
    ```sh
-   cp .env.example .env
-   docker run --rm -it caddy:2-alpine caddy hash-password
+   bash -c 'read -r -s -p "Passwort: " password && printf "\n" >&2 && printf "%s" "$password" | node scripts/hash-password.mjs'
    ```
 
-4. Setze in `.env` deine Domain ohne `https://`, deinen Benutzernamen und den eben ausgegebenen Hash. Lass den Hash in **einfachen Anführungszeichen**, damit Compose die Dollarzeichen unverändert übernimmt.
+   Erzeuge außerdem ein unabhängiges Sitzungsgeheimnis mit `openssl rand -base64 33`.
+3. Hinterlege diese Variablen in **Vercel → Project Settings → Environment Variables** für **Production**. Lass die Produktionswerte aus Preview-Deployments und aus Git heraus.
 
-   ```dotenv
-   APP_DOMAIN=zeit.meine-domain.de
-   ZEITBUCH_USER=hannah
-   ZEITBUCH_PASSWORD_HASH='hier-den-vollständigen-Hash-einsetzen'
-   ```
+   | Variable | Wert |
+   | --- | --- |
+   | `AUTH_URL` | `https://hanner.jasperpecher.de` |
+   | `AUTH_SECRET` | Erzeugtes Sitzungsgeheimnis |
+   | `ZEITBUCH_USERNAME` | Gewünschter Benutzername |
+   | `ZEITBUCH_PASSWORD_HASH` | Vollständige Ausgabe des Hash-Skripts |
+   | `TURSO_DATABASE_URL` | Vorhandene verschlüsselte Turso-Verbindungs-URL |
+   | `TURSO_AUTH_TOKEN` | Vorhandener Turso-Zugriffstoken |
 
-5. Baue und starte die Anwendung.
+4. Veröffentliche den neuen Stand. Der Build verbindet sich nicht mit Turso. Ohne vollständige Anmeldungskonfiguration verweigert die Anwendung den Datenzugriff. In der Produktion ist Turso erforderlich.
+5. Prüfe in einem privaten Browserfenster, dass die Startseite zur Anmeldung führt und `/api/zeitbuch` ohne Sitzung HTTP 401 liefert. Prüfe dann die Anmeldung und einen Zeiteintrag. Prüfe bei Vercel auch, ob frühere Deployment-URLs mit Zugriff auf dieselbe Datenbank durch Deployment Protection geschützt sind.
 
-   ```sh
-   docker compose up -d --build
-   docker compose logs -f caddy
-   ```
+Nach zwölf Anmeldeversuchen innerhalb von zehn Minuten blockiert die App weitere Anmeldungen bis zum Ende des Zeitfensters. Das Limit gilt gemeinsam für den einen Zugang; laufende Sitzungen bleiben nutzbar. Die Datenbank speichert dabei nur den Zähler und den Ablaufzeitpunkt. Eine Änderung des Benutzernamens, Passwort-Hashes oder Sitzungsgeheimnisses macht bestehende Sitzungen im neuen Deployment ungültig.
 
-   Sobald DNS und Ports erreichbar sind, holt Caddy automatisch das HTTPS-Zertifikat. Öffne deine Domain mit `https://` und verwende beim Anmelden dein ursprüngliches Passwort. Der Passwortschutz gilt für die Seite und die Datenschnittstelle. Der Next.js-Port bleibt im Docker-Netz.
+## Lokal entwickeln
 
-## Daten sichern und aktualisieren
+1. Führe `npm ci` und `npm run init-db` aus. Ohne Turso-Variablen erstellt das Skript die lokale SQLite-Datenbank unter `data/zeitbuch.sqlite`.
+2. Kopiere `.env.example` nach `.env.local`. Verwende dort einen eigenen Benutzernamen, Passwort-Hash und ein separates `AUTH_SECRET`. Lass die Turso-Variablen für die lokale Entwicklung leer.
+3. Starte `npm run dev` und öffne `http://127.0.0.1:3000`.
 
-Die SQLite-Datenbank liegt im Docker-Volume `zeitbuch_data`. Starte die Container aus demselben Projektverzeichnis, damit Compose dasselbe Volume verwendet. `docker compose down -v` löscht das Datenvolume.
+Lokale Umgebungsdateien, Schlüsseldateien, Datenbanken und Sicherungsverzeichnisse werden von Git ignoriert. Prüfe vor einem Commit den gestagten Inhalt. In der Beispielkonfiguration stehen keine Zugangsdaten.
 
-Nach dem ersten Aufruf der App kannst du eine konsistente Sicherung erstellen, während sie läuft. Der folgende Befehl schreibt eine SQLite-Datei auf den Host.
-
-```sh
-mkdir -p backups
-(umask 077; docker compose exec -T app node scripts/backup.mjs > "backups/zeitbuch-$(date +%F-%H%M%S).sqlite")
-```
-
-Behalte bei einem Update deine `.env` und das Datenvolume und führe erneut `docker compose up -d --build` aus.
-
-## Mit bestehendem Reverse-Proxy
-
-Auf einem Server mit Node.js 24 oder neuer kannst du auch `npm ci`, `npm run build` und `npm start` ausführen. Die App lauscht auf `127.0.0.1:3000`. Richte im vorhandenen Reverse-Proxy HTTPS und einen Zugriffsschutz für alle Pfade ein. Standardmäßig liegt die Datenbank in `data/zeitbuch.sqlite`. Setze `DATABASE_PATH` auf einen absoluten Pfad zu einem dauerhaft beschreibbaren Speicher, wenn du das Anwendungsverzeichnis bei Updates ersetzt.
-
-[Next.js selbst hosten](https://nextjs.org/docs/pages/building-your-application/deploying) · [Caddy und HTTPS](https://caddyserver.com/docs/automatic-https) · [Caddy-Passwortschutz](https://caddyserver.com/docs/caddyfile/directives/basic_auth)
+[Auth.js Credentials](https://authjs.dev/getting-started/authentication/credentials) · [Vercel Deployment Protection](https://vercel.com/docs/deployment-protection)
